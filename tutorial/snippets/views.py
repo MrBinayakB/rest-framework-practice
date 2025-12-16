@@ -1,4 +1,4 @@
-from rest_framework import status, mixins, generics
+from rest_framework import status, mixins
 from rest_framework.response import Response
 from snippets.models import Snippet
 from snippets.serializers import SnippetSerializer
@@ -86,6 +86,7 @@ class SnippetDetail(APIView):
         snippet = self.get_object(pk)
         snippet.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)    '''
+'''#USING MIXINS 
 class SnippetList(
     mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView
 
@@ -114,4 +115,15 @@ class SnippetDetail(
         return self.update(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwarg)
+        return self.destroy(request, *args, **kwarg) '''
+
+#Using generic class-based views
+from rest_framework import generics
+
+class SnippetList(generics.ListCreateAPIView):
+    queryset = Snippet.objects.all()
+    serializer_class = SnippetSerializer
+
+class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Snippet.objects.all()
+    serializer_class = SnippetSerializer
