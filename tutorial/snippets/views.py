@@ -4,8 +4,9 @@ from snippets.models import Snippet
 from snippets.serializers import SnippetSerializer
 from rest_framework.views import APIView
 from django.http import Http404
-
-
+from snippets.permissions import IsOwnerOrReadOnly
+from rest_framework.decorators import api_view
+from rest_framework.reverse import reverse
 '''@api_view(["GET", "POST"])
 def snippet_list(request):
     """
@@ -129,7 +130,7 @@ class SnippetList(generics.ListCreateAPIView):
 class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Snippet.objects.all()
     serializer_class = SnippetSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
 
 from django.contrib.auth.models import User
@@ -142,3 +143,21 @@ class UserList(generics.ListAPIView):
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+@api_view(["GET"])
+def api_root(request, format=None):
+    return Response(
+        {
+            "users":reverse("user-list", request=request, format=format),
+            "snippets":reverse("snippet-list", request=request, format=format),
+        }
+    )
+
+from rest_framework import renderers
+class SnippetHighlight(generics.GenericAPIView):
+    queryset = Snippet.objects.all()
+    renderer_classes = [renderers.StaticHTMLRenderer]
+
+    def get(self, request, *args, **kwargs):
+        snippet = self.get_object()
+        return Response(snippet.highlighted)
