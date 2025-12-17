@@ -145,6 +145,7 @@ class SnippetHighlight(generics.GenericAPIView):
 from rest_framework import permissions, renderers
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework import viewsets
 class SnippetViewSet(viewsets.ModelViewSet):
     """
     This ViewSet automatically provides `list`, `create`, `retrieve`,
@@ -177,13 +178,13 @@ class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 '''
-from rest_framework import viewsets
+
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """This viewset automatically provides `list` and `retrieve` actions. """
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-@api_view(["GET"])
+'''@api_view(["GET"])
 def api_root(request, format=None):
     return Response(
         {
@@ -191,4 +192,4 @@ def api_root(request, format=None):
             "snippets":reverse("snippet-list", request=request, format=format),
         }
     )
-
+'''
