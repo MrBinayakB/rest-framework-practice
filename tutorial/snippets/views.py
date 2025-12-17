@@ -1,11 +1,12 @@
+'''
 from rest_framework import status, mixins, permissions
 from rest_framework.response import Response
-from snippets.models import Snippet
-from snippets.serializers import SnippetSerializer
 from rest_framework.views import APIView
-from django.http import Http404
-from snippets.permissions import IsOwnerOrReadOnly
+from django.http import Http404 '''
+from snippets.permissions import IsOwnerOrReadOnly 
 from rest_framework.decorators import api_view
+from snippets.serializers import SnippetSerializer
+from snippets.models import Snippet
 from rest_framework.reverse import reverse
 '''@api_view(["GET", "POST"])
 def snippet_list(request):
@@ -118,7 +119,7 @@ class SnippetDetail(
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwarg) '''
 
-#Using generic class-based views
+'''#Using generic class-based views
 from rest_framework import generics
 
 class SnippetList(generics.ListCreateAPIView):
@@ -131,16 +132,54 @@ class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Snippet.objects.all()
     serializer_class = SnippetSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+from rest_framework import renderers
+class SnippetHighlight(generics.GenericAPIView):
+    queryset = Snippet.objects.all()
+    renderer_classes = [renderers.StaticHTMLRenderer]
 
+    def get(self, request, *args, **kwargs):
+        snippet = self.get_object()
+        return Response(snippet.highlighted)
+'''
+##replacing SnippetList,SnippetDetail and SnippetHighlight using single Class
+from rest_framework import permissions, renderers
+from rest_framework.decorators import action
+from rest_framework.response import Response
+class SnippetViewSet(viewsets.ModelViewSet):
+    """
+    This ViewSet automatically provides `list`, `create`, `retrieve`,
+    `update` and `destroy` actions.
+
+    Additionally we also provide an extra `highlight` action.
+    """
+
+    queryset = Snippet.objects.all()
+    serializer_class = SnippetSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])
+    def highlight(self, request, *args, **kwargs):
+        snippet = self.get_object()
+        return Response(snippet.highlighted)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 from django.contrib.auth.models import User
 from snippets.serializers import UserSerializer
-
+#Removing UserList and UserDetail and replacing it with ViewSets
+'''
 class UserList(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
 class UserDetail(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+'''
+from rest_framework import viewsets
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """This viewset automatically provides `list` and `retrieve` actions. """
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -153,11 +192,3 @@ def api_root(request, format=None):
         }
     )
 
-from rest_framework import renderers
-class SnippetHighlight(generics.GenericAPIView):
-    queryset = Snippet.objects.all()
-    renderer_classes = [renderers.StaticHTMLRenderer]
-
-    def get(self, request, *args, **kwargs):
-        snippet = self.get_object()
-        return Response(snippet.highlighted)
